@@ -137,9 +137,22 @@ public class BlackJack {
       }
     }
 
+    // Helper: Check if a specific card is currently flying in the air
+    private boolean isCardAnimating(Card c) {
+        for (AnimatedCard ac : animatedCard) {
+            // Check if the card object in the animation list is the same instance
+            if (ac.card == c) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+        
+        // 1. Draw Background
         if (backgroundImage != null) {
             g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
         } else {
@@ -147,11 +160,73 @@ public class BlackJack {
             g.fillRect(0, 0, getWidth(), getHeight());
         }
 
-        try {
-            int cardWidth = 70;
-            int cardHeight = 100;
+        int cardWidth = 70;
+        int cardHeight = 100;
+        int spacing = 25;
 
-            // Draw animated cards (these are actively moving)
+        try {
+            // 2. Draw DEALER'S Static Cards (Cards already landed)
+            // We removed the "if (!isAnimating)" check here so they stay visible!
+            int y = 230;
+            ArrayList<Card> dealerCards = dealer.getDealerCards();
+            int totalWidth = 0;
+            if (dealerCards.size() > 0) {
+                totalWidth = dealerCards.size() * cardWidth + (dealerCards.size() - 1) * spacing;
+            }
+            int startX = (getWidth() - totalWidth) / 2;
+
+            for (int i = 0; i < dealerCards.size(); i++) {
+                Card c = dealerCards.get(i);
+                
+                // CRITICAL FIX: If this specific card is currently animating, 
+                // skip drawing the static version so we don't see it twice.
+                if (isCardAnimating(c)) continue; 
+
+                int x = startX + (i * (cardWidth + spacing));
+
+                if (i == 0 && !dealer.isShowHidden()) {
+                    if (hiddenCardImage != null) {
+                        g.drawImage(hiddenCardImage, x, y, cardWidth, cardHeight, this);
+                    }
+                } else {
+                    String value = c.value;
+                    String suit = c.suit;
+                    String path = "/card_pngs/card_faces/" + value + suit + ".png";
+                    URL cardUrl = getClass().getResource(path);
+                    if (cardUrl != null) {
+                        Image cardImg = new ImageIcon(cardUrl).getImage();
+                        g.drawImage(cardImg, x, y, cardWidth, cardHeight, this);
+                    }
+                }
+            }
+
+            // 3. Draw PLAYER'S Static Cards (Cards already landed)
+            int playerY = 450;
+            ArrayList<Card> playerCards = player.getPlayerCards();
+            int totalPlayerWidth = 0;
+            if (playerCards.size() > 0) {
+                totalPlayerWidth = playerCards.size() * cardWidth + (playerCards.size() - 1) * spacing;
+            }
+            int playerStartX = (getWidth() - totalPlayerWidth) / 2;
+
+            for (int i = 0; i < playerCards.size(); i++) {
+                Card c = playerCards.get(i);
+
+                // CRITICAL FIX: Skip if this card is flying
+                if (isCardAnimating(c)) continue;
+
+                int x = playerStartX + (i * (cardWidth + spacing));
+                String value = c.value;
+                String suit = c.suit;
+                String path = "/card_pngs/card_faces/" + value + suit + ".png";
+                URL cardUrl = getClass().getResource(path);
+                if (cardUrl != null) {
+                    Image cardImg = new ImageIcon(cardUrl).getImage();
+                    g.drawImage(cardImg, x, playerY, cardWidth, cardHeight, this);
+                }
+            }
+
+            // 4. Draw Animated Cards (The moving ones) on TOP
             for (AnimatedCard ac : animatedCard) {
                 if (ac.isHidden) {
                     if (hiddenCardImage != null) {
@@ -168,64 +243,6 @@ public class BlackJack {
                     }
                 }
             }
-
-            // Only draw static cards if NOT animating
-            if (!isAnimating) {
-                // --- Draw dealer's cards STATIC ---
-                int y = 230;
-                int spacing = 25;
-                ArrayList<Card> dealerCards = dealer.getDealerCards();
-
-                int totalWidth = 0;
-                if (dealerCards.size() > 0) {
-                    totalWidth = dealerCards.size() * cardWidth + (dealerCards.size() - 1) * spacing;
-                }
-                int startX = (getWidth() - totalWidth) / 2;
-
-                for (int i = 0; i < dealerCards.size(); i++) {
-                    int x = startX + (i * (cardWidth + spacing));
-
-                    if (i == 0 && !dealer.isShowHidden()) {
-                        if (hiddenCardImage != null) {
-                            g.drawImage(hiddenCardImage, x, y, cardWidth, cardHeight, this);
-                        }
-                    } else {
-                        Card c = dealerCards.get(i);
-                        String value = c.value;
-                        String suit = c.suit;
-                        String path = "/card_pngs/card_faces/" + value + suit + ".png";
-                        URL cardUrl = getClass().getResource(path);
-                        if (cardUrl != null) {
-                            Image cardImg = new ImageIcon(cardUrl).getImage();
-                            g.drawImage(cardImg, x, y, cardWidth, cardHeight, this);
-                        }
-                    }
-                }
-
-                // --- Draw player's cards STATIC ---
-                int playerY = 450;
-                ArrayList<Card> playerCards = player.getPlayerCards();
-
-                int totalPlayerWidth = 0;
-                if (playerCards.size() > 0) {
-                    totalPlayerWidth = playerCards.size() * cardWidth + (playerCards.size() - 1) * spacing;
-                }
-                int playerStartX = (getWidth() - totalPlayerWidth) / 2;
-
-                for (int i = 0; i < playerCards.size(); i++) {
-                    int x = playerStartX + (i * (cardWidth + spacing));
-                    Card c = playerCards.get(i);
-                    String value = c.value;
-                    String suit = c.suit;
-                    String path = "/card_pngs/card_faces/" + value + suit + ".png";
-                    URL cardUrl = getClass().getResource(path);
-                    if (cardUrl != null) {
-                        Image cardImg = new ImageIcon(cardUrl).getImage();
-                        g.drawImage(cardImg, x, playerY, cardWidth, cardHeight, this);
-                    }
-                }
-            }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
