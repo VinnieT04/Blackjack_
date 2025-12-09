@@ -15,6 +15,10 @@ public class BlackJack {
 
   private boolean isBetActive = false;
 
+  private int playerWins = 0;
+  private int dealerWins = 0;
+
+
   int boardWidth = 1000;
   int boardHeight = 800;
 
@@ -54,7 +58,7 @@ public class BlackJack {
     private ImageIcon blank20 = loadChipIcon("chip_blank_4.png");
     private ImageIcon blank10 = loadChipIcon("chip_blank_5.png");
 
-// ... rest of your BlackJack class remains the same ...
+  // ... rest of your BlackJack class remains the same ...
 
   // mapping numbered -> blank icon (your requested mapping)
   Map<Integer, ImageIcon> chipMap = Map.of(
@@ -77,6 +81,8 @@ public class BlackJack {
   // Buttons we need to disable/enable
   private JButton hitButton;
   private JButton standButton;
+
+  private JButton newGameButton = new JButton("New Game");
 
   //animated cards class
     class AnimatedCard
@@ -303,7 +309,7 @@ public class BlackJack {
     gamePanel.add(resultLabel);
 
     scoreBoardLabel = new JLabel("Player: 0  |  Dealer: 0", SwingConstants.RIGHT);
-    scoreBoardLabel.setBounds((centerX - 350), (centerY - 150), 400, 50);
+    scoreBoardLabel.setBounds(0, 10, 800, 50);
     scoreBoardLabel.setFont(new Font("Arial", Font.BOLD, 20));
     scoreBoardLabel.setForeground(Color.WHITE);
     gamePanel.add(scoreBoardLabel);
@@ -325,8 +331,15 @@ public class BlackJack {
     standButton.setContentAreaFilled(false);
     standButton.setBorderPainted(true);
 
+    newGameButton.setBounds(750, 50, 120, 50);
+    newGameButton.setFocusable(false);
+    newGameButton.setOpaque(false);
+    newGameButton.setContentAreaFilled(false);
+    newGameButton.setBorderPainted(true);
+
     gamePanel.add(hitButton);
     gamePanel.add(standButton);
+    gamePanel.add(newGameButton);
 
     // Create the numbered chip selection buttons (right side) using images
     addChipSelectionImage(500, chip500);
@@ -436,6 +449,19 @@ public class BlackJack {
       }
     });
 
+    newGameButton.addActionListener(new ActionListener() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (isAnimating) return;
+
+        updateScores();
+        resetRound();
+        beforePlay();  // open betting dialog again
+        frame.repaint();
+    }
+    });
+
+
     frame.setContentPane(gamePanel);
     frame.revalidate();
     frame.setVisible(true);
@@ -445,6 +471,40 @@ public class BlackJack {
     frame.repaint();
     updateScores();
   }
+
+  private void resetRound() {
+    // Clear animations
+    animatedCard.clear();
+    isAnimating = false;
+    if (animationTimer != null) animationTimer.stop();
+
+    // Clear cards
+    player.getPlayerCards().clear();
+    dealer.getDealerCards().clear();
+
+    // Restes hands
+    player.resetHand();
+    dealer.resetHand();
+
+    // Clear table chips
+    clearTableChips();
+
+    // Reset bet
+    currentBet = 0;
+    isBetActive = false;
+
+    // Reset labels
+    resultLabel.setText("");
+    resultLabel.setForeground(Color.YELLOW);
+
+    // Re-enable buttons
+    hitButton.setEnabled(true);
+    standButton.setEnabled(true);
+
+    updateMoneyLabel();
+
+  }
+
 
   private void animateSingleCard(Card card, boolean isDealer, int cardIndex)
   {
@@ -800,16 +860,23 @@ public class BlackJack {
       result = "Dealer busts! You win!";
       // pay out: player gets 2x bet (bet already subtracted)
       playerMoney += currentBet * 2;
+      playerWins++;
+      updateScores();
     } else if (dealerValue > playerValue) {
       result = "Dealer wins!";
+      dealerWins++;
+      updateScores();
       // player loses bet (already subtracted)
     } else if (dealerValue < playerValue) {
       result = "You win!";
       playerMoney += currentBet * 2;
+      playerWins++;
+      updateScores();
     } else {
       result = "Tie!";
       // push: return bet
       playerMoney += currentBet;
+      updateScores();
     }
 
     resultLabel.setText(result);
@@ -817,15 +884,26 @@ public class BlackJack {
   }
 
   private void updateScores() {
-    int playerScore = player.getSum();
-    int dealerScore = dealer.isShowHidden() ? dealer.getSum() : dealer.getVisibleSum();
+    // Current round totals (safe if hands are empty)
+    int playerScore = 0;
+    if (player.getPlayerCards() != null && !player.getPlayerCards().isEmpty()) {
+        playerScore = player.getSum();
+    }
 
-    String scoreboardText = String.format("Player: %d  |  Dealer: %d", playerScore, dealerScore);
+    int dealerScore = 0;
+    if (dealer.getDealerCards() != null && !dealer.getDealerCards().isEmpty()) {
+        dealerScore = dealer.isShowHidden() ? dealer.getSum() : dealer.getVisibleSum();
+    }
+
+    // Display both persistent wins and current round totals.
+    // Format: "Wins P: X  D: Y  |  Player: N  |  Dealer: M"
+    String scoreboardText = String.format(
+        "Wins P: %d  D: %d    |    Player: %d  |  Dealer: %d",
+        playerWins, dealerWins, playerScore, dealerScore
+    );
     scoreBoardLabel.setText(scoreboardText);
-  }
+    scoreBoardLabel.setBounds(300, 10, 800, 40);
+    scoreBoardLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-  // // main for quick run
-  // public static void main(String[] args) {
-  //   SwingUtilities.invokeLater(() -> new BlackJack());
-  // }
+  }
 }

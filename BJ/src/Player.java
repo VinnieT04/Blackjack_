@@ -54,11 +54,6 @@ public class Player {
     currentBet += amount;
     balance -= amount;
   }
-  
-  // public void doubleBet() {
-  //   balance -= currentBet;
-  //   currentBet *= 2;
-  // }
 
   public void winBet() {
     balance += currentBet * 2;
@@ -72,5 +67,10 @@ public class Player {
 
   public void resetBet() {
     currentBet = 0;
+  }
+
+  public void resetHand() {
+    playerSum = 0;
+    playerAceCount = 0;
   }
 }

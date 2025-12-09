@@ -73,4 +73,10 @@ public class Dealer {
     }
     return 0;
   }
+
+  public void resetHand() {
+    dealerSum = 0;
+    dealerAceCount = 0;
+    showHidden = false;
+  }
 }
