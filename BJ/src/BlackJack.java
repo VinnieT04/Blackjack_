@@ -263,6 +263,12 @@ public class BlackJack {
     frame.setResizable(false);
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+    //icon
+    if (chip500 != null && chip500.getImage() != null) {
+            // Get the Image object from the ImageIcon
+            frame.setIconImage(chip500.getImage());
+    }
+
     BackgroundPanel gamePanel = new BackgroundPanel("table.png");
     gamePanel.setLayout(null); // we use absolute positioning (as you had)
     gamePanel.setPreferredSize(new Dimension(boardWidth, boardHeight));
