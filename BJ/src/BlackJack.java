@@ -22,7 +22,7 @@ public class BlackJack {
   int boardWidth = 1000;
   int boardHeight = 800;
 
-  JFrame frame = new JFrame("BLACK JACK");
+  JFrame frame = new JFrame("BLACKJACK");
   JLabel resultLabel = new JLabel();
   JLabel scoreBoardLabel = new JLabel();
 
@@ -267,6 +267,16 @@ public class BlackJack {
     gamePanel.setLayout(null); // we use absolute positioning (as you had)
     gamePanel.setPreferredSize(new Dimension(boardWidth, boardHeight));
 
+    // ---- CURSOR ----
+    Toolkit toolkit = Toolkit.getDefaultToolkit();
+    Image gloveImage = toolkit.getImage(getClass().getResource("/glove.png"));
+    Cursor gloveCursor = toolkit.createCustomCursor(
+            gloveImage,
+            new Point(0, 0),
+            "glove cursor"
+    );
+    gamePanel.setCursor(gloveCursor);
+
     // Create tableChipPanel (blank chips above player's cards)
     tableChipPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
     tableChipPanel.setOpaque(false);
@@ -413,6 +423,7 @@ public class BlackJack {
                       hitButton.setEnabled(false);
                       standButton.setEnabled(false);
 
+                      dealerWins++;
                       isBetActive = false;
                       clearTableChips();
                       currentBet = 0;
@@ -459,6 +470,25 @@ public class BlackJack {
         beforePlay();  // open betting dialog again
         frame.repaint();
     }
+    });
+
+    gamePanel.addMouseListener(new MouseAdapter() {
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        // LEFT CLICK → HIT
+        if (SwingUtilities.isLeftMouseButton(e)) {
+          if (hitButton.isEnabled()) {
+            hitButton.doClick();
+          }
+        }
+
+          // RIGHT CLICK → STAY
+        if (SwingUtilities.isRightMouseButton(e)) {
+          if (standButton.isEnabled()) {
+            standButton.doClick();
+          }
+        }
+      }
     });
 
 
@@ -864,8 +894,8 @@ public class BlackJack {
       updateScores();
     } else if (dealerValue > playerValue) {
       result = "Dealer wins!";
-      dealerWins++;
       updateScores();
+      dealerWins++;
       // player loses bet (already subtracted)
     } else if (dealerValue < playerValue) {
       result = "You win!";
